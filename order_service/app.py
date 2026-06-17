@@ -3,28 +3,46 @@ import mysql.connector
 from kafka import KafkaProducer
 import json
 import uuid
+import time
 
 app = Flask(__name__)
 
-# DB connection
-conn = mysql.connector.connect(
-    host="127.0.0.1",   # IMPORTANT FIX
-    user="root",
-    password="root123",
-    database="sairam_db",
-    port=3306
-)
+# ===============================
+# DB CONNECTION WITH RETRY (FIX)
+# ===============================
+conn = None
 
+for i in range(10):
+    try:
+        conn = mysql.connector.connect(
+            host="mysql",
+            user="root",
+            password="root123",
+            database="sairam_db",
+            port=3306
+        )
+        print("✅ Connected to MySQL")
+        break
+    except Exception as e:
+        print(f"⏳ Waiting for MySQL... Attempt {i+1}", e)
+        time.sleep(5)
 
+if conn is None:
+    raise Exception("❌ Could not connect to MySQL")
 
 cursor = conn.cursor()
 
-# Kafka
+# ===============================
+# KAFKA CONFIG
+# ===============================
 producer = KafkaProducer(
     bootstrap_servers='localhost:9092',
     value_serializer=lambda x: json.dumps(x).encode('utf-8')
 )
 
+# ===============================
+# CREATE ORDER API
+# ===============================
 @app.route('/api/v1/order', methods=['POST'])
 def create_order():
     data = request.json
@@ -32,7 +50,7 @@ def create_order():
     customer_id = data.get("customer_id")
     idem_key = data.get("idempotency_key")
 
-    # 🔥 CHECK EXISTING
+    # 🔍 CHECK DUPLICATE
     cursor.execute(
         "SELECT order_id FROM idempotency_keys WHERE idempotency_key=%s",
         (idem_key,)
@@ -42,9 +60,8 @@ def create_order():
     if result:
         order_id = result[0]
 
-        print(f"❌ DUPLICATE: {order_id}")
+        print(f"❌ DUPLICATE ORDER: {order_id}")
 
-        # send to DLQ
         producer.send("dlq_topic", {
             "order_id": order_id,
             "reason": "Duplicate"
@@ -58,7 +75,6 @@ def create_order():
     # ✅ CREATE NEW ORDER
     order_id = "ORD-" + str(uuid.uuid4())[:8]
 
-    # SAVE
     cursor.execute(
         "INSERT INTO idempotency_keys (idempotency_key, order_id) VALUES (%s, %s)",
         (idem_key, order_id)
@@ -67,7 +83,6 @@ def create_order():
 
     print(f"✅ NEW ORDER: {order_id}")
 
-    # send to payment
     producer.send("payment_topic", {
         "order_id": order_id
     })
@@ -77,5 +92,17 @@ def create_order():
         "order_id": order_id
     })
 
+
+# ===============================
+# HEALTH CHECK (VERY IMPORTANT)
+# ===============================
+@app.route('/')
+def health():
+    return "API is running", 200
+
+
+# ===============================
+# MAIN
+# ===============================
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(host="0.0.0.0", port=5000)
