@@ -105,4 +105,9 @@ def health():
 # MAIN
 # ===============================
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    try:
+        print("🚀 Starting Order Service...")
+        app.run(host="0.0.0.0", port=5000)
+    except Exception as e:
+        print("❌ ERROR IN ORDER SERVICE:", e)
+        input("Press Enter to exit...")
