@@ -1,23 +1,43 @@
+import time
 from kafka import KafkaConsumer
-
 import json
 
-consumer = KafkaConsumer(
-    'dlq_orders',
-    bootstrap_servers='localhost:9092',
-    auto_offset_reset='latest',   # ✅ IMPORTANT
-    enable_auto_commit=True,
-    group_id='dlq-group',         # ✅ ADD THIS
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-)
+print("DLQ Service Starting...")
 
-print("🚨 DLQ Service Started...")
+consumer = None
 
-for msg in consumer:
-    data = msg.value
-    order_id = data.get("order_id")
-    reason = data.get("reason")
+# ===============================
+# RETRY FOR KAFKA CONNECTION
+# ===============================
+for i in range(10):
+    try:
+        consumer = KafkaConsumer(
+            'dlq_topic',
+            bootstrap_servers='localhost:9092',
+            value_deserializer=lambda x: json.loads(x.decode('utf-8')),
+            group_id='dlq-group',
+            auto_offset_reset='earliest'
+        )
+        print("Connected to Kafka (DLQ)")
+        break
+    except Exception as e:
+        print(f"Waiting for Kafka... Attempt {i+1}", e)
+        time.sleep(5)
 
-    print(f"\n🚨 DLQ RECEIVED: {order_id}")
-    print(f"❌ Reason: {reason}")
-    print("💸 Refund processed successfully")
+if consumer is None:
+    raise Exception("Could not connect to Kafka")
+
+print("DLQ Service Started...")
+
+# ===============================
+# CONSUME MESSAGES
+# ===============================
+for message in consumer:
+    data = message.value
+
+    print("DLQ EVENT RECEIVED:")
+    print(data)
+
+    # Here you can log/store failures
+    # Example:
+    # write to file / DB / monitoring
