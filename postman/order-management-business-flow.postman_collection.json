@@ -1,0 +1,203 @@
+{
+  "info": {
+    "_postman_id": "f6ee25da-8005-4c0a-919e-f691d4cf1715",
+    "name": "SaiRam_Order_System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52559030",
+    "_collection_link": "https://go.postman.co/collection/52559030-f6ee25da-8005-4c0a-919e-f691d4cf1715?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "CREATE REQUEST",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Order created or duplicate\", function () {\r",
+              "    let json = pm.response.json();\r",
+              "    pm.expect(json).to.have.property(\"order_id\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"customer_id\": \"CUST-{{$randomInt}}\",\r\n    \"idempotency_key\": \"order-{{$randomInt}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/order",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "order"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "DUPLICATE ORDER",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let json = pm.response.json();\r",
+              "\r",
+              "if (json.message === \"Duplicate order\") {\r",
+              "    pm.test(\"Duplicate handled correctly\", function () {\r",
+              "        pm.expect(json.message).to.include(\"Duplicate\");\r",
+              "    });\r",
+              "} else {\r",
+              "    pm.test(\"Order created correctly\", function () {\r",
+              "        pm.expect(json.message).to.include(\"Order\");\r",
+              "    });\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"customer_id\": \"CUST-1000\",\r\n    \"idempotency_key\": \"order-fixed-1\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/order",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "order"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GENERATE OTP",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"order_id\": \"ORD-e2c8a8d8\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/delivery/generate-otp",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "delivery",
+            "generate-otp"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "VERIFY OTP",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"order_id\": \"ORD-e2c8a8d8\",\r\n  \"otp\": \"4099\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/delivery/verify-otp",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "delivery",
+            "verify-otp"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "TEST FAILURE API",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/simulate/failure?order_id=ORD-e2c8a8d8",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "simulate",
+            "failure"
+          ],
+          "query": [
+            {
+              "key": "order_id",
+              "value": "ORD-e2c8a8d8"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

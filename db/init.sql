@@ -1,0 +1,33 @@
+-- CREATE DATABASE
+CREATE DATABASE IF NOT EXISTS sairam_db;
+USE sairam_db;
+
+-- ORDERS TABLE
+CREATE TABLE IF NOT EXISTS orders (
+    order_id VARCHAR(255) PRIMARY KEY,
+    customer_id VARCHAR(255),
+    amount INT,
+    status VARCHAR(50)
+);
+
+-- IDEMPOTENCY TABLE
+CREATE TABLE IF NOT EXISTS idempotency_keys (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    idempotency_key VARCHAR(255) UNIQUE,
+    order_id VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- OTP TABLE (NEW - IMPORTANT)
+CREATE TABLE IF NOT EXISTS otp_store (
+    order_id VARCHAR(255) PRIMARY KEY,
+    otp INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- SAMPLE DATA (1000 RECORDS SIMULATION BASE)
+INSERT INTO orders (order_id, customer_id, amount, status)
+VALUES 
+('ORD-1001','CUST-1',200,'CREATED'),
+('ORD-1002','CUST-2',500,'FAILED'),
+('ORD-1003','CUST-3',300,'SUCCESS');
