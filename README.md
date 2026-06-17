@@ -10,20 +10,12 @@ It simulates real-world enterprise workflow including order processing, payment,
 
 ## 🏗️ Architecture Flow
 
-Client → Order Service (API)
-          ↓
-      Kafka Topic
-          ↓
-    Payment Service
-          ↓ 
-   Kitchen Service
-          ↓
-  Delivery Service
-          ↓
-   Order Completed 
-          ↓
+Client → Order Service (API) → Kafka Topic → Payment Service → Kitchen Service → Delivery Service → Order Completed
+
 ❌ Failed Events → DLQ Service
-```
+
+---
+
 ## ⚙️ Tech Stack
 
 * Python (FastAPI)
@@ -54,7 +46,7 @@ Client → Order Service (API)
 docker-compose up -d
 ```
 
-### 2️⃣ Start Services (Open multiple terminals)
+### 2️⃣ Start Services
 
 ```
 python services/payment_service.py
@@ -112,6 +104,7 @@ This project demonstrates **enterprise-level QA capabilities** including:
 ---
 
 ## 👨‍💻 Author
-
+Ramakrishna Jandhyala
+Email: jandhyalaramkrishna@gmail.com
 Ramakrishna Jandhyala
 Email: [jandhyalaramkrishna@gmail.com](mailto:jandhyalaramkrishna@gmail.com)
