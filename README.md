@@ -14,22 +14,14 @@ Client → Order Service (API)
           ↓
       Kafka Topic
           ↓
-┌──────────────────────────────┐
-│       Payment Service        │
-└──────────────────────────────┘
+    Payment Service
+          ↓ 
+   Kitchen Service
           ↓
-┌──────────────────────────────┐
-│       Kitchen Service        │
-└──────────────────────────────┘
+  Delivery Service
           ↓
-┌──────────────────────────────┐
-│       Delivery Service       │
-└──────────────────────────────┘
+   Order Completed 
           ↓
-┌──────────────────────────────┐
-│       Order Completed        │
-└──────────────────────────────┘
-
 ❌ Failed Events → DLQ Service
 ```
 ## ⚙️ Tech Stack
